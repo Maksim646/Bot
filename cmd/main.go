@@ -1,11 +1,12 @@
 package main
 
 import (
+	_ "fmt"
 	"log"
 	"time"
 
 	_bot "github.com/Maksim646/Bot/bot"
-	"github.com/Maksim646/Bot/database/migration"
+	"github.com/Maksim646/Bot/database"
 	_ "github.com/Maksim646/Bot/domain/user/repository/postgresql"
 	_userRepo "github.com/Maksim646/Bot/domain/user/repository/postgresql"
 	_userUsecase "github.com/Maksim646/Bot/domain/user/usecase"
@@ -15,15 +16,17 @@ import (
 )
 
 var config struct {
-	TgBotSecretKey string `envconfig:"TGBOT_SECRET_KEY" default:"7139569617:AAG9FUmJkiDHaGbLBhUnFClolMVkTyMRl0s"`
-	PostgresURI    string `envconfig:"POSTGRES_URI" required:"true"`
-	MigrationsDir  string `envconfig:"MIGRATIONS_DIR" default:"../../database/migrations"`
+	TgBotSecretKey string `envconfig:"TGBOT_SECRET_KEY" default:"7655110388:AAGk_q4QlcIccS1MA4vHKM5FvFiHSnUbRVg"`
+	PostgresURI    string `envconfig:"POSTGRES_URI" default:"postgres://postgres:postgres@localhost:5444/postgres?sslmode=disable"`
+	MigrationsDir  string `envconfig:"MIGRATIONS_DIR" default:"/app/database/migrations"`
 }
 
 func main() {
-	envconfig.MustProcess("", &config)
 
-	migrator := migration.NewMigrator(config.PostgresURI, config.MigrationsDir)
+	envconfig.MustProcess("", &config)
+	//fmt.Println("config:", config.PostgresURI)
+
+	migrator := database.NewMigrator(config.PostgresURI, config.MigrationsDir)
 	if err := migrator.Apply(); err != nil {
 		log.Fatal("cannot apply migrations: ", err)
 	}

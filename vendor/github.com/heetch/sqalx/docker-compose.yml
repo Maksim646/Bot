@@ -4,7 +4,7 @@ services:
     postgres:
         image: postgres:9.6-alpine
         ports:
-            - 5432:5432
+            - 5432:5444
         environment:
             - POSTGRES_USER=sqalx
             - POSTGRES_PASSWORD=sqalx

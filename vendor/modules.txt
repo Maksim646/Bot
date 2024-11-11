@@ -5,8 +5,12 @@ github.com/go-telegram-bot-api/telegram-bot-api/v5
 ## explicit; go 1.22.0
 github.com/golang-migrate/migrate/v4
 github.com/golang-migrate/migrate/v4/database
+github.com/golang-migrate/migrate/v4/database/multistmt
+github.com/golang-migrate/migrate/v4/database/postgres
 github.com/golang-migrate/migrate/v4/internal/url
 github.com/golang-migrate/migrate/v4/source
+github.com/golang-migrate/migrate/v4/source/file
+github.com/golang-migrate/migrate/v4/source/iofs
 # github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
@@ -26,6 +30,11 @@ github.com/jmoiron/sqlx/reflectx
 # github.com/kelseyhightower/envconfig v1.4.0
 ## explicit
 github.com/kelseyhightower/envconfig
+# github.com/lib/pq v1.10.9
+## explicit; go 1.13
+github.com/lib/pq
+github.com/lib/pq/oid
+github.com/lib/pq/scram
 # go.uber.org/atomic v1.7.0
 ## explicit; go 1.13
 go.uber.org/atomic

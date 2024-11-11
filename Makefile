@@ -59,4 +59,4 @@ test:
 # Запуск интерактивной сессии с базой данных
 run-sql:
 	@echo "Running interactive session with PostgreSQL..."
-	@docker exec -it $$(docker ps -aqf name=$(SERVICE_NAME)-postgres) psql -U postgres
+	@docker exec -it $$(docker ps -aqf name=$(SERVICE_NAME)-postgres) bot_postgres_1 -U postgres
