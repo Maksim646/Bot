@@ -1,0 +1,34 @@
+version: '3.9'
+
+services:
+  bot:
+    container_name: bot
+    build:
+      context: .
+      dockerfile: cmd/Dockerfile
+    image: bot:latest
+    restart: unless-stopped
+    environment:
+      ADDR: ":8000"
+      LOG_LEVEL: "DEBUG"
+      POSTGRES_URI: "postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable"
+      TGBOT_SECRET_KEY: "7139569617:AAG9FUmJkiDHaGbLBhUnFClolMVkTyMRl0s"  # Ваш секретный ключ бота
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:14
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
