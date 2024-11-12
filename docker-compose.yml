@@ -11,7 +11,7 @@ services:
     environment:
       ADDR: ":8000"
       LOG_LEVEL: "DEBUG"
-      POSTGRES_URI: "postgres://postgres:postgres@localhost:5444/postgres?sslmode=disable"
+      POSTGRES_URI: "postgres://postgres:postgres@postgres:5432/bot_db?sslmode=disable"
       TGBOT_SECRET_KEY: "7655110388:AAGk_q4QlcIccS1MA4vHKM5FvFiHSnUbRVg"  
       MigrationsDir: "../database/migrations"
     ports:
@@ -27,9 +27,9 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+      POSTGRES_DB: bot_db
     ports:
-      - "5444:5444"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
