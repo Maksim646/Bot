@@ -1,5 +1,7 @@
 BEGIN;
-UPDATE schema_migartion SET dirty=false WHERE version=3;
+
+UPDATE schema_migrations SET dirty=false WHERE version=4;
+
 CREATE TABLE IF NOT EXISTS Kafedrs 
 (
   ID_Kaf BIGINT,  

@@ -18,7 +18,7 @@ import (
 var config struct {
 	TgBotSecretKey string `envconfig:"TGBOT_SECRET_KEY" default:"7655110388:AAGk_q4QlcIccS1MA4vHKM5FvFiHSnUbRVg"`
 	PostgresURI    string `envconfig:"POSTGRES_URI" default:"postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable"`
-	MigrationsDir  string `envconfig:"MIGRATIONS_DIR" default:"C:/Users/Максим/Downloads/Bot/Bot/database/migrations"`
+	MigrationsDir  string `envconfig:"MIGRATIONS_DIR" default:"/app/database/migrations"`
 }
 
 func main() {
