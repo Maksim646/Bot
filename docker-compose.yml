@@ -2,34 +2,34 @@ version: '3.9'
 
 services:
   bot:
-    container_name: bot
     build:
       context: .
       dockerfile: cmd/Dockerfile
     image: bot:latest
     restart: unless-stopped
     environment:
-      ADDR: ":8000"
-      LOG_LEVEL: "DEBUG"
-      POSTGRES_URI: "postgres://postgres:postgres@postgres:5432/bot_db?sslmode=disable"
-      TGBOT_SECRET_KEY: "7655110388:AAGk_q4QlcIccS1MA4vHKM5FvFiHSnUbRVg"  
-      MigrationsDir: "../database/migrations"
+      - ADDR=:8000
+      - LOG_LEVEL=DEBUG
+      - POSTGRES_URI=postgres://postgres:postgres@postgres:5433/bot_db?sslmode=disable
+      - TGBOT_SECRET_KEY=7655110388:AAGk_q4QlcIccS1MA4vHKM5FvFiHSnUbRVg
+      - MIGRATIONS_DIR=/app/database/migrations
     ports:
       - "8000:8000"
     depends_on:
       - postgres
     volumes:
       - ./database/migrations:/app/database/migrations
+    
 
   postgres:
-    image: postgres:14
+    image: postgres:latest
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: bot_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

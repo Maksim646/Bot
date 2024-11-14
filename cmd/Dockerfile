@@ -5,7 +5,7 @@ FROM golang:1.23-alpine AS build
 RUN apk add --no-cache git
 
 # Устанавливаем рабочую директорию
-WORKDIR /src
+WORKDIR /app
 
 # Копируем файлы зависимостей
 COPY go.mod go.sum ./
@@ -21,7 +21,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-X 'main.Version=$(git rev-parse
 FROM alpine
 
 # Копируем собранное приложение
-COPY --from=build /bin/main /bin/main
+COPY --from=build /bin/main /cmd/main
 
 # Указываем команду для запуска приложения
-ENTRYPOINT ["/bin/main"]
+ENTRYPOINT ["/cmd/main"]
