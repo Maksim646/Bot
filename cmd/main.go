@@ -3,22 +3,29 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
-	//_bot "github.com/Maksim646/Bot/bot"
 	"github.com/Maksim646/Bot/database"
 	_ "github.com/Maksim646/Bot/domain/user/repository/postgresql"
 
-	//_userRepo "github.com/Maksim646/Bot/domain/user/repository/postgresql"
-	//_userUsecase "github.com/Maksim646/Bot/domain/user/usecase"
+	_tgBot "github.com/Maksim646/Bot/bot"
+	_userRepo "github.com/Maksim646/Bot/domain/user/repository/postgresql"
+	_userUsecase "github.com/Maksim646/Bot/domain/user/usecase"
+	"github.com/Maksim646/Bot/handler"
 	"github.com/heetch/sqalx"
 	"github.com/jmoiron/sqlx"
 	"github.com/kelseyhightower/envconfig"
 )
 
+const (
+	httpVersion = "development"
+)
+
 var config struct {
+	Addr           string `envconfig:"ADDR" default:":8095"`
 	TgBotSecretKey string `envconfig:"TGBOT_SECRET_KEY" default:"7655110388:AAGk_q4QlcIccS1MA4vHKM5FvFiHSnUbRVg"`
-	PostgresURI    string `envconfig:"POSTGRES_URI" default:"postgres://postgres:postgres@localhost:5433/bot_db?sslmode=disable"`
+	PostgresURI    string `envconfig:"POSTGRES_URI" default:"postgres://postgres:postgres@localhost:5432/bot_db?sslmode=disable"`
 	MigrationsDir  string `envconfig:"MIGRATIONS_DIR" default:"database/migrations"`
 }
 
@@ -52,6 +59,33 @@ func main() {
 	defer sqalxConn.Close()
 
 	log.Println("db was ZBS")
-	time.Sleep(2 * time.Minute)
+
+	userRepo := _userRepo.New(sqalxConn)
+	userUsecase := _userUsecase.New(userRepo)
+
+	bot, err := _tgBot.New(config.TgBotSecretKey, userRepo, userUsecase)
+	if err != nil {
+		log.Fatal("error init bot: ", err)
+		fmt.Println("проблема инит")
+	}
+
+	go bot.ListenUpdates()
+
+	handler.New(
+		httpVersion,
+		userUsecase,
+		*bot,
+	)
+
+	time.Sleep(2 * time.Hour)
+
+	server := http.Server{
+		Addr: config.Addr,
+	}
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 }
