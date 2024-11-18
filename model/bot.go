@@ -12,4 +12,6 @@ const (
 
 	ParseModeHTML     = "html"
 	HelloTgBotMessage = "Скорее начинай учиться!"
+	AksLogin          = "Введите логин и пароль в виде 'логин:пароль'"
+	YourDataWasSaved  = "Ваши логин и пароль успешно сохранены!"
 )

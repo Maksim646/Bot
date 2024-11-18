@@ -3,7 +3,13 @@ package bot
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
+
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/url"
 
 	"github.com/Maksim646/Bot/model"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -15,6 +21,18 @@ type Tgbot struct {
 	apiKey      string
 	userRepo    model.IUserRepository
 	userUsecase model.IUserUsecase
+}
+
+const (
+	tokenURL    = "https://sso.guap.ru:8443/realms/master/protocol/openid-connect/token"
+	clientID    = "prosuai"
+	redirectURI = "https://pro.guap.ru/oauth/callback"
+)
+
+type TokenResponse struct {
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	ExpiresIn   int    `json:"expires_in"`
 }
 
 func New(apiKey string, userRepo model.IUserRepository, userUsecase model.IUserUsecase) (*Tgbot, error) {
@@ -51,7 +69,13 @@ func (b *Tgbot) ProcessMessage(tgUpdate tgbotapi.Update) error {
 			tgUpdate.Message.From.ID))
 
 		if tgUpdate.Message.Text == model.START_CMD {
-			return b.StartCommandHandler(ctx, tgUpdate, nil)
+			fmt.Println("ща отправлю hello")
+			b.StartCommandHandler(ctx, tgUpdate, nil)
+			user, err := b.userUsecase.GetUserByTgID(ctx, tgUpdate.Message.From.ID)
+			if err != nil {
+				return model.ErrUserNotFound
+			}
+			return b.AskForCredentials(ctx, user.ChatID.Int64)
 		}
 
 		if strings.Contains(tgUpdate.Message.Text, ":") {
@@ -59,7 +83,13 @@ func (b *Tgbot) ProcessMessage(tgUpdate tgbotapi.Update) error {
 			if len(credentials) == 2 {
 				login := credentials[0]
 				password := credentials[1]
-				return b.SaveCredentials(ctx, tgUpdate, login, password)
+				b.SaveCredentials(ctx, tgUpdate, login, password)
+				user, err := b.userUsecase.GetUserByTgID(ctx, tgUpdate.Message.From.ID)
+				if err != nil {
+					return model.ErrUserNotFound
+				}
+				token, err := b.AuthHandler(ctx, user.UserLogin.String, user.UserPassword.String)
+				fmt.Println("token, но скорее всего ошибка", token, err)
 			}
 		}
 
@@ -72,19 +102,20 @@ func (b *Tgbot) ProcessMessage(tgUpdate tgbotapi.Update) error {
 func (b *Tgbot) StartCommandHandler(ctx context.Context, update tgbotapi.Update, data []string) error {
 	_, err := b.userUsecase.GetUserByTgID(ctx, update.Message.From.ID)
 	if err != nil {
-		login := "defaultLogin"
-		password := "defaultPass"
-		err := b.userRepo.CreateUserByTg(ctx, update.Message.From.UserName, update.Message.Chat.ID, login, password)
+		fmt.Println("error:", err)
+		err := b.userRepo.CreateUserByTg(ctx, update.Message.From.UserName, update.Message.Chat.ID)
 		if err != nil {
+			fmt.Println("ошибка create user")
 			return model.ErrUserNotFound
 		}
-		if err := b.HelloMessage(ctx, update.Message.Chat.ID); err != nil {
+		fmt.Println("попал втрой раз")
+		if err != nil {
+			fmt.Println("ошибка hellomessage?")
 			return err
 		}
-		return b.AskForCredentials(ctx, update.Message.Chat.ID)
 	}
 
-	return b.AskForCredentials(ctx, update.Message.Chat.ID)
+	return b.HelloMessage(ctx, update.Message.Chat.ID)
 }
 
 func (b *Tgbot) HelloMessage(ctx context.Context, chatID int64) error {
@@ -96,7 +127,7 @@ func (b *Tgbot) HelloMessage(ctx context.Context, chatID int64) error {
 }
 
 func (b *Tgbot) AskForCredentials(ctx context.Context, chatID int64) error {
-	askMsg := "Введите логин и пароль в виде 'логин:пароль'"
+	askMsg := model.AksLogin
 	newMsg := tgbotapi.NewMessage(chatID, askMsg)
 	newMsg.ParseMode = model.ParseModeHTML
 	_, err := b.bot.Send(newMsg)
@@ -105,15 +136,51 @@ func (b *Tgbot) AskForCredentials(ctx context.Context, chatID int64) error {
 }
 
 func (b *Tgbot) SaveCredentials(ctx context.Context, update tgbotapi.Update, login string, password string) error {
-	err := b.userRepo.CreateUserByTg(ctx, update.Message.From.UserName, update.Message.Chat.ID, login, password)
+	fmt.Println("request save credentials")
+	err := b.userUsecase.UpdateUser(ctx, login, password, update.Message.From.ID)
 	if err != nil {
+		fmt.Println("error update login", err)
 		return err
 	}
 
-	successMsg := "Ваши логин и пароль успешно сохранены!"
+	successMsg := model.YourDataWasSaved
 	newMsg := tgbotapi.NewMessage(update.Message.Chat.ID, successMsg)
 	newMsg.ParseMode = model.ParseModeHTML
 	_, err = b.bot.Send(newMsg)
 
 	return err
+}
+
+func (b *Tgbot) AuthHandler(ctx context.Context, username string, password string) (*TokenResponse, error) {
+	data := url.Values{}
+	data.Set("grant_type", "password")
+	data.Set("username", username)
+	data.Set("password", password)
+	data.Set("client_id", clientID)
+	data.Set("redirect_uri", redirectURI)
+
+	req, err := http.NewRequest("POST", tokenURL, bytes.NewBufferString(data.Encode()))
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при создании запроса: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при выполнении запроса: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("ошибка при получении токена: %s, ответ сервера: %s", resp.Status, string(body))
+	}
+
+	var tokenResponse TokenResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tokenResponse); err != nil {
+		return nil, fmt.Errorf("ошибка при декодировании ответа: %w", err)
+	}
+
+	return &tokenResponse, nil
 }

@@ -6,14 +6,13 @@ CREATE TABLE IF NOT EXISTS Kafedrs
   Kaf_Name VARCHAR(255)
 );
 
-DROP TABLE schema_migrations;
-
 CREATE TABLE IF NOT EXISTS users
 (
     id SERIAL PRIMARY KEY,  
     user_name VARCHAR(255),
     chat_id BIGINT,
-    ID_Kaf BIGINT
+    user_login VARCHAR(255),
+    user_password VARCHAR(255)
 );
 
 COMMIT;

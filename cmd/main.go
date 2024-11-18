@@ -25,13 +25,13 @@ const (
 var config struct {
 	Addr           string `envconfig:"ADDR" default:":8095"`
 	TgBotSecretKey string `envconfig:"TGBOT_SECRET_KEY" default:"7655110388:AAGk_q4QlcIccS1MA4vHKM5FvFiHSnUbRVg"`
-	PostgresURI    string `envconfig:"POSTGRES_URI" default:"postgres://postgres:postgres@localhost:5432/bot_db?sslmode=disable"`
+	PostgresURI    string `envconfig:"POSTGRES_URI" default:"postgres://postgres:postgres@localhost:5433/bot_db?sslmode=disable"`
 	MigrationsDir  string `envconfig:"MIGRATIONS_DIR" default:"database/migrations"`
 }
 
 func main() {
 	envconfig.MustProcess("", &config)
-	time.Sleep(2 * time.Second)
+
 	fmt.Println("db:", config.PostgresURI)
 
 	sqlxConn, err := sqlx.Connect("postgres", config.PostgresURI)
