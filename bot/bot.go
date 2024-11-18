@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	_ "time"
 
 	"github.com/Maksim646/Bot/model"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -51,13 +50,20 @@ func (b *Tgbot) ProcessMessage(tgUpdate tgbotapi.Update) error {
 			tgUpdate.Message.From.UserName,
 			tgUpdate.Message.From.ID))
 
-		commandData := strings.Split(tgUpdate.Message.Text, " ")
-		if commandData[0] != model.START_CMD {
-			return model.ErrUnknownBotCommand
+		if tgUpdate.Message.Text == model.START_CMD {
+			return b.StartCommandHandler(ctx, tgUpdate, nil)
 		}
 
-		return b.StartCommandHandler(ctx, tgUpdate, commandData)
+		if strings.Contains(tgUpdate.Message.Text, ":") {
+			credentials := strings.Split(tgUpdate.Message.Text, ":")
+			if len(credentials) == 2 {
+				login := credentials[0]
+				password := credentials[1]
+				return b.SaveCredentials(ctx, tgUpdate, login, password)
+			}
+		}
 
+		return model.ErrUnknownBotCommand
 	}
 
 	return model.ErrUnknownBotCommand
@@ -66,29 +72,48 @@ func (b *Tgbot) ProcessMessage(tgUpdate tgbotapi.Update) error {
 func (b *Tgbot) StartCommandHandler(ctx context.Context, update tgbotapi.Update, data []string) error {
 	_, err := b.userUsecase.GetUserByTgID(ctx, update.Message.From.ID)
 	if err != nil {
-		fmt.Println("1")
-
-		err := b.userRepo.CreateUserByTg(ctx, update.Message.From.UserName, update.Message.Chat.ID)
-		fmt.Println("2")
+		login := "defaultLogin"
+		password := "defaultPass"
+		err := b.userRepo.CreateUserByTg(ctx, update.Message.From.UserName, update.Message.Chat.ID, login, password)
 		if err != nil {
 			return model.ErrUserNotFound
 		}
-		//zap.L().Info(fmt.Sprintf("create user from telegram with ID=[%s]", userID))
-		fmt.Println("3")
-		return b.HelloMessage(ctx, update.Message.Chat.ID)
+		if err := b.HelloMessage(ctx, update.Message.Chat.ID); err != nil {
+			return err
+		}
+		return b.AskForCredentials(ctx, update.Message.Chat.ID)
 	}
 
-	// if user.Status.String != model.UserActive {
-	// 	return model.ErrUserPermissionDenied
-	// }
-
-	return b.HelloMessage(ctx, update.Message.Chat.ID)
+	return b.AskForCredentials(ctx, update.Message.Chat.ID)
 }
 
 func (b *Tgbot) HelloMessage(ctx context.Context, chatID int64) error {
 	newMsg := tgbotapi.NewMessage(chatID, model.HelloTgBotMessage)
 	newMsg.ParseMode = model.ParseModeHTML
 	_, err := b.bot.Send(newMsg)
+
+	return err
+}
+
+func (b *Tgbot) AskForCredentials(ctx context.Context, chatID int64) error {
+	askMsg := "Введите логин и пароль в виде 'логин:пароль'"
+	newMsg := tgbotapi.NewMessage(chatID, askMsg)
+	newMsg.ParseMode = model.ParseModeHTML
+	_, err := b.bot.Send(newMsg)
+
+	return err
+}
+
+func (b *Tgbot) SaveCredentials(ctx context.Context, update tgbotapi.Update, login string, password string) error {
+	err := b.userRepo.CreateUserByTg(ctx, update.Message.From.UserName, update.Message.Chat.ID, login, password)
+	if err != nil {
+		return err
+	}
+
+	successMsg := "Ваши логин и пароль успешно сохранены!"
+	newMsg := tgbotapi.NewMessage(update.Message.Chat.ID, successMsg)
+	newMsg.ParseMode = model.ParseModeHTML
+	_, err = b.bot.Send(newMsg)
 
 	return err
 }

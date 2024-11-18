@@ -16,8 +16,8 @@ func New(userRepository model.IUserRepository) model.IUserUsecase {
 	}
 }
 
-func (u *Usecase) CreateUserByTg(ctx context.Context, userName string, chatID int64) error {
-	return u.userRepository.CreateUserByTg(ctx, userName, chatID)
+func (u *Usecase) CreateUserByTg(ctx context.Context, userName string, chatID int64, userLogin string, userPassword string) error {
+	return u.userRepository.CreateUserByTg(ctx, userName, chatID, userLogin, userPassword)
 }
 
 func (u *Usecase) GetUserByTgID(ctx context.Context, userID int64) (model.User, error) {

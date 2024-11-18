@@ -22,15 +22,19 @@ func New(sqalxConn sqalx.Node) model.IUserRepository {
 	return &UserRepository{sqalxConn: sqalxConn}
 }
 
-func (r *UserRepository) CreateUserByTg(ctx context.Context, userName string, chatID int64) error {
+func (r *UserRepository) CreateUserByTg(ctx context.Context, userName string, chatID int64, userLogin string, userPassword string) error {
 	query, params, err := postgresql.Builder.Insert("users").
 		Columns(
 			"user_name",
 			"chatid",
+			"user_login",
+			"user_password",
 		).
 		Values(
 			userName,
 			chatID,
+			userLogin,
+			userPassword,
 		).
 		ToSql()
 	if err != nil {
@@ -48,6 +52,8 @@ func (r *UserRepository) GetUserByTgID(ctx context.Context, userID int64) (model
 		"users.id",
 		"users.user_name",
 		"users.chatid",
+		"users.user_Login",
+		"users.user_Password",
 	).
 		From("users").
 		Where(sq.Eq{"users.id": userID}).
