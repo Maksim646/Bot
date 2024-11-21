@@ -13,12 +13,14 @@ type Handler struct {
 	telegramBotSecretKey    string
 	telegramInitDataExpired int
 	userUsecase             model.IUserUsecase
+	AlertUsecase			model.IAlertUsecase
 	bot                     bot.Tgbot
 }
 
 func New(
 	version string,
 	userUsecase model.IUserUsecase,
+	AlertUsecase model.IAlertUsecase,
 	bot bot.Tgbot,
 ) *Handler {
 

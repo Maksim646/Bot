@@ -24,7 +24,8 @@ type Tgbot struct {
 }
 
 type alert struct {
-	nil
+	alertRepo model.IAlertRepository 
+	AlertUsecase model.IAlertUsecase
 }
 
 const (

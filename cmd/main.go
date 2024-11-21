@@ -74,6 +74,7 @@ func main() {
 	handler.New(
 		httpVersion,
 		userUsecase,
+		AlertUsecase,
 		*bot,
 	)
 
