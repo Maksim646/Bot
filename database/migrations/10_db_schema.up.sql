@@ -1,9 +1,11 @@
 BEGIN;
 
-CREATE TABLE IF NOT EXISTS Kafedrs 
+CREATE TABLE IF NOT EXISTS alerts 
 (
-  ID_Kaf BIGINT,  
-  Kaf_Name VARCHAR(255)
+  chat_id BIGINT,  
+  teacher VARCHAR(255),
+  subject_of_study VARCHAR (255),
+  data_alert data,
 );
 
 CREATE TABLE IF NOT EXISTS users
@@ -11,8 +13,6 @@ CREATE TABLE IF NOT EXISTS users
     id SERIAL PRIMARY KEY,  
     user_name VARCHAR(255),
     chat_id BIGINT,
-    user_login VARCHAR(255),
-    user_password VARCHAR(255)
 );
 
 COMMIT;

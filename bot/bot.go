@@ -23,6 +23,10 @@ type Tgbot struct {
 	userUsecase model.IUserUsecase
 }
 
+type alert struct {
+	nil
+}
+
 const (
 	tokenURL    = "https://sso.guap.ru:8443/realms/master/protocol/openid-connect/token"
 	clientID    = "prosuai"
