@@ -62,8 +62,10 @@ func main() {
 
 	userRepo := _userRepo.New(sqalxConn)
 	userUsecase := _userUsecase.New(userRepo)
+	alertRepo := _alertRepo.New(sqalxConn)
+	alertUsecase := _alertUsecase.New(alertRepo)
 
-	bot, err := _tgBot.New(config.TgBotSecretKey, userRepo, userUsecase)
+	bot, err := _tgBot.New(config.TgBotSecretKey, userRepo, userUsecase, alertRepo, alertUsecase)
 	if err != nil {
 		log.Fatal("error init bot: ", err)
 		fmt.Println("проблема инит")
@@ -74,7 +76,7 @@ func main() {
 	handler.New(
 		httpVersion,
 		userUsecase,
-		AlertUsecase,
+		alertUsecase,
 		*bot,
 	)
 

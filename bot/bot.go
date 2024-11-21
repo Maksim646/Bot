@@ -21,11 +21,13 @@ type Tgbot struct {
 	apiKey      string
 	userRepo    model.IUserRepository
 	userUsecase model.IUserUsecase
+	alertRepo 	model.IAlertRepository 
+	аlertUsecase model.IAlertUsecase
 }
 
 type alert struct {
 	alertRepo model.IAlertRepository 
-	AlertUsecase model.IAlertUsecase
+	аlertUsecase model.IAlertUsecase
 }
 
 const (
@@ -40,7 +42,7 @@ type TokenResponse struct {
 	ExpiresIn   int    `json:"expires_in"`
 }
 
-func New(apiKey string, userRepo model.IUserRepository, userUsecase model.IUserUsecase) (*Tgbot, error) {
+func New(apiKey string, userRepo model.IUserRepository, userUsecase model.IUserUsecase, alertRepo model.IAlertRepository, alertUsecase model.IAlertUsecase) (*Tgbot, error) {
 	bot, err := tgbotapi.NewBotAPI(apiKey)
 	fmt.Println("инит")
 	return &Tgbot{
@@ -48,6 +50,8 @@ func New(apiKey string, userRepo model.IUserRepository, userUsecase model.IUserU
 		apiKey:      apiKey,
 		userRepo:    userRepo,
 		userUsecase: userUsecase,
+		alertRepo:	alertRepo,
+		аlertUsecase: аlertUsecase,
 	}, err
 }
 
@@ -83,6 +87,10 @@ func (b *Tgbot) ProcessMessage(tgUpdate tgbotapi.Update) error {
 			return b.AskForCredentials(ctx, user.ChatID.Int64)
 		}
 
+		if tgUpdate.Message.Text = "/create_alert"{
+			return b.AskForTeacherName(ctx, tgUpdate.Message.Chat.ID)
+		}
+
 		if strings.Contains(tgUpdate.Message.Text, ":") {
 			credentials := strings.Split(tgUpdate.Message.Text, ":")
 			if len(credentials) == 2 {
@@ -102,6 +110,32 @@ func (b *Tgbot) ProcessMessage(tgUpdate tgbotapi.Update) error {
 	}
 
 	return model.ErrUnknownBotCommand
+}
+
+func (b *Tgbot) AskForTeacherName(ctx context.Context, chatID int64) error {
+	askMsg := "Пожалуйста, введите ФИО преподавателя:"
+	newMsg := tgbotapi.NewMessage(chatID, askMsg)
+	newMsg.ParseMode = model.ParseModeHTML
+	_, err := b.bot.Send(newMsg)
+	return err
+}
+
+func (b *Tgbot) SaveTeacherName(ctx context.Context, chatID int64, teacherName string) error {
+	fmt.Println("ФИО преподавателя:", teacherName)
+	return b.AskForSubject(ctx, chatID)
+}
+
+func (b *Tgbot) AskForSubject(ctx context.Context, chatID int64) error {
+	askMsg := "Пожалуйста, введите название предмета:"
+	newMsg := tgbotapi.NewMessage(chatID, askMsg)
+	newMsg.ParseMode = model.ParseModeHTML
+	_, err := b.bot.Send(newMsg)
+	return err
+}
+
+func (b *Tgbot) SaveSubject(ctx context.Context, chatID int64, subject string) error {
+	fmt.Println("Название предмета:", subject)
+	return b.AskForReminderTime(ctx, chatID)
 }
 
 func (b *Tgbot) StartCommandHandler(ctx context.Context, update tgbotapi.Update, data []string) error {
