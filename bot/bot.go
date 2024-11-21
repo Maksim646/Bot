@@ -156,7 +156,7 @@ func (b *Tgbot) AuthHandler(ctx context.Context, username string, password strin
 	data.Set("grant_type", "password")
 	data.Set("username", username)
 	data.Set("password", password)
-	data.Set("client_id", clientID)
+	data.Set("client_id", "prosuai")
 	data.Set("redirect_uri", redirectURI)
 
 	req, err := http.NewRequest("POST", tokenURL, bytes.NewBufferString(data.Encode()))
